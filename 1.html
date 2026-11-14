@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPMS | Sit Smart Lab</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#071322;--panel:#10243a;--panel2:#0c1c30;--edge:#244664;--cyan:#37e2ff;--blue:#4b8dff;--green:#39e58c;--yellow:#ffd34e;--pink:#ff5e9b;--purple:#a78bfa;--txt:#eff8ff;--muted:#a6c2dc}
+*{box-sizing:border-box}body{margin:0;color:var(--txt);font:15px "Segoe UI",Arial,sans-serif;background:radial-gradient(ellipse at top,#153d61 0,#071322 55%);min-height:100vh}
+.wrap{max-width:1500px;margin:auto;padding:20px}.hero{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:14px 4px 22px}.brand{display:flex;align-items:center;gap:15px}.logo{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,#22d3ee,#6366f1);display:grid;place-items:center;font-size:30px;color:#041525;font-weight:900;box-shadow:0 0 25px #24d3ff45}.hero h1{font-size:clamp(26px,4vw,42px);margin:0;letter-spacing:-1px}.hero h1 span{color:var(--cyan)}.hero p{margin:7px 0 0;color:#b7d8f6}.tag{padding:10px 15px;border:1px solid #237ba0;border-radius:30px;background:#0c2b43;color:#8beeff;font-weight:700;font-size:13px}
+.nav{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}.nav button,.btn{border:1px solid var(--edge);background:#142b45;color:#d9ecff;border-radius:12px;padding:12px 16px;cursor:pointer;font-weight:750;transition:.2s}.nav button.active{background:linear-gradient(120deg,#0787a9,#4b56d8);border:0;color:white;box-shadow:0 6px 22px #1678bb44}.btn:hover,.nav button:hover{transform:translateY(-1px);filter:brightness(1.12)}.btn.start{background:linear-gradient(120deg,#00b976,#10a86a);border:0;color:#031a12}.btn.stop{background:#56213c;border-color:#9d3d68;color:#ffb6d7}.btn.reset{background:linear-gradient(120deg,#0875b9,#4f46e5);border:0}
+.tab{display:none}.tab.active{display:block}.grid{display:grid;gap:14px}.four{grid-template-columns:repeat(4,minmax(0,1fr))}.two{grid-template-columns:1.3fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.card{background:linear-gradient(160deg,#122b45eF,#0c1d31f5);border:1px solid var(--edge);border-radius:19px;padding:17px;box-shadow:0 12px 28px #0002;min-width:0}.head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.head h2{margin:0;font-size:18px}.muted{color:var(--muted);font-size:12px}.read{position:relative;overflow:hidden}.read:after{content:"";position:absolute;width:100px;height:100px;border-radius:50%;right:-38px;top:-45px;background:var(--c);opacity:.09}.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}.value{font-size:30px;font-weight:900;margin:8px 0;color:var(--c)}.unit{font-size:13px;color:#9bb8d5}.status{display:inline-flex;align-items:center;gap:8px;background:#113c30;color:#80f6bb;border-radius:30px;padding:9px 13px;font-weight:750;font-size:13px}.dot{width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}.chart{height:280px}.chart.big{height:340px}.miniGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.mini{padding:12px;border-radius:13px;background:#09192a;border:1px solid #213d59}.mini span{font-size:12px;color:var(--muted)}.mini b{display:block;font-size:22px;margin-top:5px}.barline{display:flex;justify-content:space-between;margin:10px 0 5px;font-size:13px}.track{height:8px;background:#233c55;border-radius:20px;overflow:hidden}.fill{height:100%;border-radius:20px;transition:width .3s}.mapbox{display:flex;align-items:center;justify-content:center;min-height:255px;background:radial-gradient(circle,#0b4565,#0a1d31 70%);border-radius:15px;position:relative;overflow:hidden}.seat{width:190px;height:220px;position:relative;border:3px solid #41d9ff;border-radius:45% 45% 35% 35%;background:#0a2843;box-shadow:0 0 22px #20caff35,inset 0 0 18px #20caff22}.heat{position:absolute;width:72px;height:72px;border-radius:50%;filter:blur(12px);opacity:.9}.heat.a{left:22px;top:20px;background:#00c8ff}.heat.b{right:22px;top:20px;background:#00c8ff}.heat.c{left:22px;bottom:20px;background:#7dff36}.heat.d{right:22px;bottom:20px;background:#7dff36}.sensorlabel{position:absolute;font-weight:900;text-shadow:0 2px 5px #000;font-size:14px}.sensorlabel.a{left:33px;top:48px}.sensorlabel.b{right:33px;top:48px}.sensorlabel.c{left:33px;bottom:48px}.sensorlabel.d{right:33px;bottom:48px}.scale{position:absolute;right:15px;top:35px;display:flex;align-items:center;gap:7px;font-size:11px;color:#bdd8ed}.gradient{height:150px;width:10px;border-radius:10px;background:linear-gradient(red,yellow,lime,cyan,blue)}.person{height:180px;display:flex;align-items:center;justify-content:center;font-size:95px;filter:drop-shadow(0 0 14px #3bdcff66)}.conclusion{background:linear-gradient(120deg,#123f3c,#123047);border:1px solid #267a71;border-radius:15px;padding:16px;line-height:1.65}.conclusion strong{color:#76ffbc}.insight{display:flex;gap:12px;align-items:flex-start;background:#0b1d30;border:1px solid #23435f;border-radius:14px;padding:13px;margin-top:10px}.emoji{font-size:25px}.controls{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:20px 0}.controls .btn{min-width:170px;font-size:16px;padding:15px 22px}.alert{background:#332b19;border:1px solid #70521e;color:#ffe0a2;border-radius:12px;padding:12px;font-size:12px;margin-top:14px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:10px;border-bottom:1px solid #28435d;text-align:left;white-space:nowrap}th{color:#a8c6df}.foot{text-align:center;color:#7394b5;font-size:12px;padding:10px}
+@media(max-width:950px){.four{grid-template-columns:repeat(2,1fr)}.two,.three{grid-template-columns:1fr}.miniGrid{grid-template-columns:1fr 1fr 1fr}}@media(max-width:520px){.four{grid-template-columns:1fr 1fr}.wrap{padding:12px}.value{font-size:24px}}
+
+@media print{
+ body{background:#fff!important;color:#111!important}
+ .wrap{max-width:none;padding:8mm}
+ .nav,.tag,button,.status{display:none!important}
+ .tab{display:block!important;page-break-inside:avoid}
+ .card{background:#fff!important;color:#111!important;border:1px solid #bbb!important;box-shadow:none!important}
+ .muted,.label,.unit{color:#333!important}
+ canvas{max-height:260px}
+ #shareCard{display:none!important}
+ .hero{padding:0 0 10px}
+}
+</style></head><body><div class="wrap">
+<header class="hero"><div class="brand"><div class="logo">⚛</div><div><h1>SPMS <span>· SIT SMART LAB</span></h1><p>Kenali tekanan, pahami postur, duduk lebih sadar!</p></div></div><div class="tag">🎓 MODE PAMERAN · 1 PENGGUNA / SESI</div></header>
+<div class="nav"><button class="active" onclick="tab('live',this)">⚡ Live Lab</button><button onclick="tab('result',this)">🧠 Hasil & Kesimpulan</button></div>
+<section class="tab active" id="live">
+<div class="head"><h2>⚡ Live Lab — Monitoring Real-Time</h2><div class="status" id="status"><span class="dot"></span> Siap mengukur</div></div>
+<div class="grid four">
+<div class="card read" style="--c:#37e2ff"><div class="label">FSR 1 · Kiri depan</div><div class="value" id="v0">— <span class="unit">N*</span></div><div class="muted">Tekanan terukur</div></div>
+<div class="card read" style="--c:#39e58c"><div class="label">FSR 2 · Kanan depan</div><div class="value" id="v1">— <span class="unit">N*</span></div><div class="muted">Tekanan terukur</div></div>
+<div class="card read" style="--c:#ffd34e"><div class="label">FSR 3 · Kiri belakang</div><div class="value" id="v2">— <span class="unit">N*</span></div><div class="muted">Tekanan terukur</div></div>
+<div class="card read" style="--c:#a78bfa"><div class="label">FSR 4 · Kanan belakang</div><div class="value" id="v3">— <span class="unit">N*</span></div><div class="muted">Tekanan terukur</div></div></div>
+<div class="grid two" style="margin-top:14px">
+<div class="card"><div class="head"><h2>📈 Grafik Tekanan 4 Sensor</h2><span class="muted">Data live · jendela 120 sampel</span></div><div class="chart"><canvas id="liveChart"></canvas></div></div>
+<div class="card"><div class="head"><h2>🪑 Peta Tekanan Dudukan</h2><span class="muted">Ilustrasi relatif</span></div><div class="mapbox"><div class="seat"><div class="heat a"></div><div class="heat b"></div><div class="heat c"></div><div class="heat d"></div><span class="sensorlabel a">S1</span><span class="sensorlabel b">S2</span><span class="sensorlabel c">S3</span><span class="sensorlabel d">S4</span></div><div class="scale">Tinggi<div class="gradient"></div>Rendah</div></div><div class="muted" style="text-align:center;margin-top:10px">Warna makin hangat = tekanan relatif lebih tinggi</div></div></div>
+<div class="grid two" style="margin-top:14px"><div class="card"><div class="head"><h2>🧭 Status & Durasi</h2><span class="status" id="liveCat">Menunggu START</span></div><div class="miniGrid"><div class="mini"><span>Durasi sesi</span><b id="timer">00:00</b></div><div class="mini"><span>Asimetri kiri–kanan*</span><b id="ai">—</b></div><div class="mini"><span>Sampel masuk</span><b id="n">0</b></div></div><div style="margin-top:17px"><div class="label">Timeline kondisi sementara</div><div id="liveBars"></div></div></div><div class="card"><div class="head"><h2>💡 Apa yang terjadi?</h2></div><div class="conclusion"><b>Sensor FSR</b> merasakan tekanan melalui perubahan resistansi. ESP32 membaca sinyal, lalu dashboard mengubahnya menjadi grafik dan informasi visual.</div><div class="insight"><span class="emoji">🌈</span><div><b>Grafik naik</b><br><span class="muted">Tekanan sensor meningkat.</span></div></div><div class="insight"><span class="emoji">〰️</span><div><b>Grafik stabil</b><br><span class="muted">Tekanan sensor relatif tidak berubah.</span></div></div></div></div>
+<div class="alert">LIVE MONITORING: grafik dan nilai sensor ditampilkan realtime dari Firebase. Pengaturan sesi tersedia pada Dashboard Kontrol.</div>
+
+
+</section>
+<section class="tab" id="result">
+<div class="head"><h2>🧠 Hasil Analisis & Kesimpulan</h2><span class="tag" id="rid">Belum ada sesi</span></div>
+<div class="grid four"><div class="card"><div class="label">Durasi pengukuran</div><div class="value" style="--c:var(--cyan)" id="rt">00:00</div></div><div class="card"><div class="label">Total sampel</div><div class="value" style="--c:var(--green)" id="rs">0</div></div><div class="card"><div class="label">Kondisi dominan</div><div class="value" style="--c:var(--yellow);font-size:21px" id="dom">—</div></div><div class="card"><div class="label">Asimetri rata-rata</div><div class="value" style="--c:var(--purple)" id="rai">—</div></div></div>
+<div class="grid two" style="margin-top:14px"><div class="card"><div class="head"><h2>🍩 Distribusi Durasi Kondisi</h2></div><div class="chart big"><canvas id="donut"></canvas></div></div><div class="card"><div class="head"><h2>📊 Tekanan selama sesi</h2></div><div class="chart big"><canvas id="endChart"></canvas></div></div></div>
+<div class="grid two" style="margin-top:14px"><div class="card"><div class="head"><h2>⏱️ Rekap waktu postur</h2></div><div id="resultBars"></div><table><thead><tr><th>Kategori</th><th>Detik</th><th>%</th></tr></thead><tbody id="resultTable"></tbody></table></div><div class="card"><div class="head"><h2>📝 Kesimpulan untuk Anda</h2></div><div class="conclusion" id="summary">Lakukan pengukuran terlebih dahulu untuk memperoleh ringkasan.</div><div class="insight"><span class="emoji">🎯</span><div><b>Saran singkat</b><p id="advice" class="muted">Hasil akan muncul setelah sesi selesai.</p></div></div><div class="controls" style="justify-content:flex-start"><button class="btn" onclick="csv()">⬇ Unduh data CSV</button></div></div></div>
+<div class="card" style="margin-top:14px"><div class="head"><h2>🧩 Posture Timeline</h2><span class="muted">Perubahan kategori selama pengukuran</span></div><div id="timeline" class="muted">Belum ada data sesi.</div></div>
+</section>
+
+<div class="foot">SPMS · Sit Smart Lab · Prototype edukasi fisika dan instrumentasi</div>
+</div>
+<script>
+// Firebase project SPMS-Monitoring
+const firebaseConfig={apiKey:"AIzaSyCFz-uqaNpDKfhE_qMdnyOqxH4blNpM7FQ",authDomain:"spms-monitoring.firebaseapp.com",databaseURL:"https://spms-monitoring-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"spms-monitoring",storageBucket:"spms-monitoring.firebasestorage.app",messagingSenderId:"511843609887",appId:"1:511843609887:web:062dfee3ca49886ea3d42a",measurementId:"G-JD07YK043C"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const names=['Stabil','Condong kiri','Condong kanan','Condong depan','Condong belakang','Bersandar'],cols=['#39e58c','#4b8dff','#ff5e9b','#ffd34e','#a78bfa','#37e2ff'];
+let run=false,tm=null,sec=0,begin=0,rows=[],dur=Array(6).fill(0),catNow=0,prev=0,sid='',ais=[],live,ending,donut;
+function chart(id,labels,ds){
+ return new Chart(document.getElementById(id),{
+  type:'line',data:{labels:labels,datasets:ds},
+  options:{responsive:true,maintainAspectRatio:false,animation:false,
+   interaction:{mode:'index',intersect:false},
+   plugins:{legend:{labels:{color:'#c5def4'}}},
+   scales:{x:{ticks:{color:'#8eaccb',maxTicksLimit:8},grid:{color:'#203b56'}},
+    y:{ticks:{color:'#8eaccb'},grid:{color:'#203b56'},
+       title:{display:true,text:'Tekanan (N)',color:'#a8c6df'}}}}
+ });
+}
+function init(){
+ live=chart('liveChart',[],cols.slice(0,4).map((c,i)=>({label:'FSR '+(i+1),data:[],borderColor:c,tension:.25,pointRadius:0,borderWidth:2})));
+ ending=chart('endChart',[],cols.slice(0,4).map((c,i)=>({label:'FSR '+(i+1),data:[],borderColor:c,tension:.25,pointRadius:0,borderWidth:2})));
+ donut=new Chart(document.getElementById('donut'),{type:'doughnut',
+  data:{labels:names,datasets:[{data:dur,backgroundColor:cols,borderColor:'#10243a',borderWidth:3}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#c5def4',padding:12}}}}});
+}
+function tab(id,b){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='result')report()}
+let fbHistoryRef=null,fbLiveRef=null,fbControlRef=null,fbSessionRef=null;
+let firebaseRowsSeen={}, chartPending=null, lastChartAt=0;
+function start(){alert('Tekan tombol START fisik pada alat SPMS.');}
+function stop(){alert('Tekan tombol STOP fisik pada alat SPMS.');}
+function reset(){alert('Mulai sesi berikutnya melalui tombol BASELINE fisik pada alat SPMS.');}
+function step(){}
+function connectFirebase(){
+ const statusEl=document.getElementById('status');
+ statusEl.innerHTML='<span class="dot"></span> Menghubungkan Firebase…';
+ fbLiveRef=db.ref('/SPMS/current'); fbControlRef=db.ref('/SPMS/control');
+ fbSessionRef=db.ref('/SPMS/session'); fbHistoryRef=db.ref('/SPMS/history');
+ if(window._spmsChartTimer)clearInterval(window._spmsChartTimer);window._spmsChartTimer=setInterval(()=>{if(chartPending&&Date.now()-lastChartAt>=800)flushChart();},250);
+ const getVals=d=>[1,2,3,4].map(i=>Number(d['FSR'+i+'_N'] ?? d['FSR'+i] ?? d.sensors?.['FSR'+i]?.force_N ?? d.sensors?.['FSR'+i+'_N'] ?? 0));
+ const addChart=(label,vals)=>{chartPending={label:String(label||Date.now()),vals:vals.slice()};
+   const now=Date.now();if(now-lastChartAt<800)return;
+   flushChart();};
+ const flushChart=()=>{if(!chartPending)return;const q=chartPending;chartPending=null;
+   live.data.labels.push(q.label);q.vals.forEach((v,i)=>live.data.datasets[i].data.push(v));
+   if(live.data.labels.length>90){live.data.labels.shift();live.data.datasets.forEach(x=>x.data.shift());}
+   live.update('none');lastChartAt=Date.now();};
+ fbControlRef.on('value',snap=>{const c=snap.val()||{};let st=String(c.state||'IDLE').toUpperCase();
+   statusEl.innerHTML='<span class="dot"></span> Firebase · '+st;
+   document.getElementById('liveCat').textContent=c.message||st;},err=>statusEl.textContent='Firebase control error: '+err.message);
+ fbLiveRef.on('value',snap=>{const d=snap.val();if(!d){statusEl.textContent='Firebase tersambung; menunggu data current';return;}
+   run=!!d.monitoring;sec=Number(d.elapsed_seconds||sec||0);document.getElementById('timer').textContent=clock(sec);
+   const vals=getVals(d);vals.forEach((v,i)=>document.getElementById('v'+i).innerHTML=v.toFixed(3)+' <span class="unit">N</span>');
+   document.getElementById('liveCat').textContent=d.posture||d.status||'Data ESP32 diterima';
+   document.getElementById('ai').textContent=(Math.abs(Number(d.BI||0))*100).toFixed(1)+'%';
+   renderHeatmap(vals);addChart(d.timestamp||('t'+sec),vals);
+   statusEl.innerHTML='<span class="dot"></span> Firebase LIVE · '+(run?'MONITOR':'IDLE/STOPPED');
+ },err=>statusEl.textContent='Firebase current error: '+err.message);
+ fbHistoryRef.on('child_added',snap=>{const d=snap.val();if(!d||firebaseRowsSeen[snap.key])return;firebaseRowsSeen[snap.key]=true;
+   const vals=getVals(d),t=Number(d.elapsed_seconds||0),c=postureIndex(d.posture);
+   rows.push({sec:t,vals,c,ai:Math.abs(Number(d.BI||0))*100});dur[c]=(dur[c]||0)+1;ais.push(Math.abs(Number(d.BI||0))*100);
+   if(rows.length>3000){rows.shift();ais.shift();}
+   sec=Math.max(sec,t);sid='SPMS · Firebase';document.getElementById('n').textContent=rows.length;
+   // History disimpan untuk laporan; grafik live memakai /SPMS/current agar tidak menggambar sampel dua kali.
+ },err=>statusEl.textContent='Firebase history error: '+err.message);
+ fbSessionRef.on('value',snap=>{const x=snap.val()||{};if(String(x.status||x.state||'').toUpperCase().includes('STOP')){run=false;report();showParticipantQR(x);}},err=>statusEl.textContent='Firebase session error: '+err.message);
+}
+
+function renderHeatmap(vals){
+  const max=Math.max(...vals,0.001);
+  const hs=document.querySelectorAll('.heat');
+  vals.forEach((v,i)=>{if(hs[i]){hs[i].style.opacity=String(.18+.82*(v/max));}});
+}
+function postureIndex(p){
+  const x=String(p||'').toUpperCase();
+  if(x.includes('TEGAK')||x.includes('STABIL'))return 0;
+  if(x.includes('KIRI'))return 1;
+  if(x.includes('KANAN'))return 2;
+  if(x.includes('DEPAN'))return 3;
+  if(x.includes('BELAKANG'))return 4;
+  return 5;
+}
+function clock(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function bars(id,a,total){let e=document.getElementById(id);e.innerHTML='';names.forEach((n,i)=>{let p=total?a[i]/total*100:0;e.innerHTML+=`<div class="barline"><span>${n}</span><b>${clock(a[i])} · ${p.toFixed(1)}%</b></div><div class="track"><div class="fill" style="width:${p}%;background:${cols[i]}"></div>
+<div class="card" id="shareCard" style="margin:18px 0;text-align:center">
+ <h2>📲 Bawa Data ke HP</h2>
+ <p class="muted">Unduh atau bagikan ringkasan sampel monitoring ke perangkat pengunjung.</p>
+ <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+  <button class="btn" onclick="shareCSV()">📤 Kirim data ke HP</button>
+  <button class="btn" onclick="downloadCSV()">⬇️ Unduh CSV</button>
+  <button class="btn" onclick="shareDashboard()">🔗 Bagikan dashboard</button>
+  <button class="btn" onclick="saveDashboardPDF()">📄 Simpan tampilan dashboard (PDF)</button>
+ </div>
+ <p id="shareMsg" class="muted" style="margin-top:10px">Gunakan dashboard melalui URL publik agar dapat dibuka dari HP.</p>
+</div>
+</div>`})}
+function report(){let total=sec;document.getElementById('rid').textContent=sid||'Belum ada sesi';document.getElementById('rt').textContent=clock(total);document.getElementById('rs').textContent=rows.length;let max=Math.max(...dur),ix=dur.indexOf(max);document.getElementById('dom').textContent=rows.length?names[ix]:'—';document.getElementById('rai').textContent=ais.length?(ais.reduce((a,b)=>a+b,0)/ais.length).toFixed(1)+'%':'—';ending.data.labels=rows.map(x=>clock(x.sec));ending.data.datasets.forEach((d,i)=>d.data=rows.map(x=>x.vals[i]));ending.update();donut.data.datasets[0].data=dur;donut.update();bars('resultBars',dur,total);document.getElementById('resultTable').innerHTML=names.map((n,i)=>`<tr><td>${n}</td><td>${dur[i]}</td><td>${total?(dur[i]/total*100).toFixed(1):'0.0'}%</td></tr>`).join('');let pct=dur.map(x=>total?x/total*100:0);document.getElementById('summary').innerHTML=rows.length?`Selama <strong>${clock(total)}</strong>, kondisi paling sering terdeteksi adalah <strong>${names[ix]}</strong> (${pct[ix].toFixed(1)}%). Distribusi kategori dihitung dari sampel ESP32 yang tersimpan di Firebase.`:'Lakukan pengukuran terlebih dahulu untuk memperoleh ringkasan.';document.getElementById('advice').textContent=rows.length?'Coba pertahankan posisi yang nyaman dan lakukan perubahan posisi secara berkala.':'Saran akan tampil setelah pengukuran.';let chunks=[];rows.forEach((r,i)=>{if(!i||r.c!==rows[i-1].c)chunks.push({c:r.c,start:r.sec,end:r.sec}) ;else chunks[chunks.length-1].end=r.sec});document.getElementById('timeline').innerHTML=chunks.length?chunks.map(x=>`<span style="display:inline-block;background:${cols[x.c]}22;border:1px solid ${cols[x.c]};padding:8px 10px;border-radius:9px;margin:4px;color:#e8f5ff"><b>${names[x.c]}</b><br>${clock(x.start)}–${clock(x.end)}</span>`).join(''):'Belum ada data sesi.'}
+function makeCSV(){
+ if(!rows.length)return null;
+ return 'detik,FSR1_N,FSR2_N,FSR3_N,FSR4_N,kategori,asimetri_persen'+
+ rows.map(r=>[r.sec,...r.vals.map(v=>Number(v).toFixed(3)),names[r.c],Number(r.ai).toFixed(2)].join(',')).join('');
+}
+function downloadCSV(){
+ const data=makeCSV();if(!data){alert('Belum ada sampel monitoring.');return;}
+ const blob=new Blob([data],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='SPMS_data_monitoring.csv';a.click();URL.revokeObjectURL(url);
+ document.getElementById('shareMsg').textContent='CSV berhasil disiapkan untuk diunduh.';
+}
+async function shareCSV(){
+ const data=makeCSV();if(!data){alert('Belum ada sampel monitoring.');return;}
+ const file=new File([data],'SPMS_data_monitoring.csv',{type:'text/csv'});
+ try{
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+   await navigator.share({title:'Data Monitoring SPMS',text:'Data hasil monitoring SPMS',files:[file]});
+   document.getElementById('shareMsg').textContent='Pilih aplikasi tujuan pada menu berbagi HP.';
+  }else{
+   downloadCSV();document.getElementById('shareMsg').textContent='Browser tidak mendukung kirim file langsung. CSV diunduh; bagikan melalui WhatsApp atau aplikasi lain.';
+  }
+ }catch(e){if(e.name!=='AbortError')downloadCSV();}
+}
+async function shareDashboard(){
+ const url=location.href;
+ try{if(navigator.share)await navigator.share({title:'SPMS Sit Smart Lab',url});
+ else if(navigator.clipboard){await navigator.clipboard.writeText(url);document.getElementById('shareMsg').textContent='Link dashboard disalin.';}
+ else alert('Salin URL dashboard dari address bar.');}
+ catch(e){if(e.name!=='AbortError')alert('Salin URL dashboard dari address bar.');}
+}
+
+function saveDashboardPDF(){
+ document.getElementById('shareMsg').textContent='Pilih “Save as PDF / Simpan sebagai PDF” pada dialog cetak. File tersimpan di perangkat pengunjung.';
+ window.print();
+}
+init();
+connectFirebase();
+</script></body></html>
