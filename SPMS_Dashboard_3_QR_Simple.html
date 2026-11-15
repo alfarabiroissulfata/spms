@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPMS | QR Pengukuran</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172235;font:15px Arial,sans-serif}
+header{background:#123451;color:white;padding:22px 18px}header h1{margin:0;font-size:23px}header p{margin:7px 0 0;color:#c9dbea}
+main{max-width:900px;margin:22px auto;padding:0 14px}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+button{border:0;border-radius:8px;padding:10px 13px;background:#176b9b;color:white;font-weight:600;cursor:pointer}
+#connection{font-size:12px;color:#60748a}.item{background:white;border:1px solid #dce5ee;border-radius:12px;padding:15px;margin:12px 0;display:flex;gap:16px;align-items:center}
+.details{flex:1;min-width:0}.details h3{font-size:15px;margin:0 0 9px;overflow-wrap:anywhere}.meta{font-size:13px;line-height:1.8;color:#52647a}.qr{background:white;padding:5px;border:1px solid #e1e7ee;border-radius:8px;flex-shrink:0}.qr canvas,.qr img{display:block;width:112px!important;height:112px!important}
+.actions{margin-top:8px}.empty{background:white;padding:25px;text-align:center;border-radius:12px;color:#64748b}
+@media(max-width:560px){.item{align-items:flex-start}.qr canvas,.qr img{width:88px!important;height:88px!important}.item{gap:10px;padding:12px}}
+</style>
+</head>
+<body>
+<header><h1>SPMS · QR Pengukuran</h1><p>Daftar sesi dan QR hasil pengukuran</p></header>
+<main>
+<div class="toolbar"><strong id="count">Memuat sesi…</strong><button onclick="reload()">↻ Refresh</button></div>
+<div id="connection">Menghubungkan Firebase…</div>
+<div id="list"><div class="empty">Mengambil data dari Firebase…</div></div>
+</main>
+<script>
+const cfg={apiKey:"AIzaSyCFz-uqaNpDKfhE_qMdnyOqxH4blNpM7FQ",authDomain:"spms-monitoring.firebaseapp.com",databaseURL:"https://spms-monitoring-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"spms-monitoring",storageBucket:"spms-monitoring.firebasestorage.app",messagingSenderId:"511843609887",appId:"1:511843609887:web:062dfee3ca49886ea3d42a"};
+firebase.initializeApp(cfg);const db=firebase.database();
+function esc(v){return String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function date(v){if(!v)return '—';let n=Number(v);if(n&&n<1e12)n*=1000;return n?new Date(n).toLocaleString('id-ID'):String(v);}
+function qrLink(id,token){let u=new URL(location.href);u.search='';u.hash='';u.searchParams.set('session',id);if(token)u.searchParams.set('token',token);return u.href;}
+async function render(data){
+ const list=document.getElementById('list'), entries=Object.entries(data||{}).reverse();
+ document.getElementById('count').textContent=entries.length+' sesi';
+ if(!entries.length){list.innerHTML='<div class="empty">Belum ada sesi pengukuran.</div>';return;}
+ list.innerHTML=entries.map(([id,v])=>{let m=v.metadata||v;return `<article class="item"><div class="details"><h3>${esc(id)}</h3><div class="meta">Status: <b>${esc(m.status||'—')}</b><br>Waktu: ${esc(date(m.created_at||m.started_at))}<br>Sampel: <b id="n-${id}">…</b></div><div class="actions"><button onclick="copyLink('${encodeURIComponent(qrLink(id,m.access_token))}')">Salin link QR</button></div></div><div class="qr" id="qr-${id}"></div></article>`}).join('');
+ for(const [id,v] of entries){let m=v.metadata||v, box=document.getElementById('qr-'+CSS.escape(id));new QRCode(box,{text:qrLink(id,m.access_token),width:112,height:112,correctLevel:QRCode.CorrectLevel.M});
+ try{let s=await db.ref('/SPMS/sessions/'+id+'/history').once('value');document.getElementById('n-'+CSS.escape(id)).textContent=Object.keys(s.val()||{}).length;}
+ catch(e){document.getElementById('n-'+CSS.escape(id)).textContent='—';}}
+}
+db.ref('/SPMS/sessions').on('value',s=>{document.getElementById('connection').textContent='Firebase terhubung';render(s.val());},e=>{document.getElementById('connection').textContent='Firebase gagal: '+e.message;});
+function reload(){db.ref('/SPMS/sessions').once('value').then(s=>render(s.val()));}
+async function copyLink(x){let u=decodeURIComponent(x);try{await navigator.clipboard.writeText(u);alert('Link QR disalin');}catch(e){prompt('Salin link:',u);}}
+</script></body></html>
