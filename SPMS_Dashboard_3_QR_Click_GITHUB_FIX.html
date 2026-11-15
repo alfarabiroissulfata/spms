@@ -1,0 +1,43 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPMS Participant System</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#071426;--panel:#102a43;--line:#244966;--txt:#eaf5ff;--muted:#a9c5dc;--cyan:#27d5ed;--green:#10b981}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px system-ui,Segoe UI,sans-serif;padding:18px}
+.wrap{max-width:1100px;margin:auto}.head{display:flex;gap:14px;align-items:center;margin:4px 0 20px}.logo{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#29d5ed,#6578ff);display:grid;place-items:center;color:#071426;font-size:26px}.head h1{margin:0;font-size:clamp(24px,4vw,36px)}.head p{margin:4px 0;color:var(--muted)}
+.card{background:linear-gradient(145deg,#112b45,#0d2238);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.badge{background:#123b34;color:#6fffc2;padding:7px 12px;border-radius:30px;font-size:12px;font-weight:700}
+button,a{border:1px solid #2b6287;background:#173b5b;color:#eaf5ff;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700;cursor:pointer;display:inline-block}
+button:hover,a:hover{filter:brightness(1.15)}.muted{color:var(--muted)}.session{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.sid{font-weight:700;overflow-wrap:anywhere}.meta{font-size:13px;color:var(--muted);margin-top:6px}
+#qrbox{display:none;text-align:center}#qr{display:inline-block;background:#fff;padding:12px;border-radius:14px}#qr img,#qr canvas{display:block!important;width:240px!important;height:240px!important}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.metric{background:#0b2035;border:1px solid var(--line);border-radius:12px;padding:14px}.metric b{font-size:23px;color:var(--cyan)}
+table{width:100%;border-collapse:collapse;margin-top:12px}td,th{padding:9px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
+@media(max-width:650px){body{padding:10px}.session{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.card{padding:14px}}
+</style></head><body><main class="wrap">
+<header class="head"><div class="logo">▦</div><div><h1>SPMS <span style="color:var(--cyan)">PARTICIPANT</span></h1><p>QR Pengukuran · Riwayat sesi · Laporan</p></div></header>
+<div id="manager">
+<section class="card"><div class="row"><h2 style="margin:0">Daftar sesi pengukuran</h2><span class="badge" id="conn">Menghubungkan Firebase</span></div><p class="muted">Sesi yang tersimpan akan ditampilkan. Pilih QR untuk membuka laporan peserta yang bersangkutan.</p><div id="sessions">Memuat sesi...</div></section>
+<section class="card" id="qrbox"><div class="row"><h2>QR Pengukuran</h2><button onclick="closeQR()">Tutup</button></div><div id="qr"></div><p class="sid" id="qrSid"></p><p class="muted">Scan QR untuk membuka laporan sesi ini.</p><a id="reportLink" target="_blank">Buka laporan</a></section>
+</div>
+<div id="report" style="display:none">
+<section class="card"><div class="row"><div><span class="badge">LAPORAN PENGUKURAN</span><h2 id="reportSid" style="overflow-wrap:anywhere"></h2><p id="reportMeta" class="muted"></p></div><a href="./">← Kembali</a></div></section>
+<div class="grid"><div class="metric">Jumlah sampel<br><b id="samples">—</b></div><div class="metric">Durasi sesi<br><b id="duration">—</b></div></div>
+<section class="card"><h3>Grafik tekanan FSR (N)</h3><canvas id="pressureChart"></canvas></section>
+<section class="card"><h3>Distribusi kategori postur</h3><canvas id="postureChart"></canvas></section>
+<section class="card"><h3>Data sampel</h3><div style="overflow:auto"><table><thead><tr><th>Detik</th><th>FSR1</th><th>FSR2</th><th>FSR3</th><th>FSR4</th><th>BI</th><th>FI</th><th>Postur</th></tr></thead><tbody id="sampleRows"></tbody></table></div></section>
+</div></main>
+<script>
+const cfg={apiKey:"AIzaSyCFz-uqaNpDKfhE_qMdnyOqxH4blNpM7FQ",authDomain:"spms-monitoring.firebaseapp.com",databaseURL:"https://spms-monitoring-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"spms-monitoring",storageBucket:"spms-monitoring.firebasestorage.app",messagingSenderId:"511843609887",appId:"1:511843609887:web:062dfee3ca49886ea3d42a"};
+firebase.initializeApp(cfg);const db=firebase.database();
+let pressureChart,postureChart;
+function reportUrl(sid){const u=new URL('https://alfarabiroissulfata.github.io/spms/SPMS_Dashboard_3_QR_Click.html');u.searchParams.set('session',sid);return u.href;}
+function showQR(sid){const url=reportUrl(sid);document.getElementById('qrbox').style.display='block';document.getElementById('qr').innerHTML='<img alt="QR sesi '+sid+'" width="240" height="240" src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data='+encodeURIComponent(url)+'">';document.getElementById('qrSid').textContent=sid;document.getElementById('reportLink').href=url;}
+function closeQR(){document.getElementById('qrbox').style.display='none'}
+db.ref('/SPMS/sessions').on('value',snap=>{document.getElementById('conn').textContent='Firebase tersambung';let data=snap.val()||{},items=Object.entries(data).map(([id,v])=>({id,...(v.metadata||{})})).filter(x=>x.status==='STOPPED'||x.ended_at).sort((a,b)=>(b.ended_at||b.created_at||'').localeCompare(a.ended_at||a.created_at||''));let el=document.getElementById('sessions');if(!items.length){el.innerHTML='<p class="muted">Belum ada sesi selesai yang ditemukan.</p>';return;}el.innerHTML=items.map(x=>`<div class="card session"><div><div class="sid">${x.session_id||x.id}</div><div class="meta">${x.created_at||'Waktu tidak tersedia'} · ${x.samples||0} sampel · ${x.status||'—'}</div></div><div><button onclick="showQR('${x.id}')">Tampilkan QR</button> <button onclick="openReport('${x.id}')">Laporan</button></div></div>`).join('');},e=>document.getElementById('conn').textContent='Firebase error');
+function openReport(sid){location.href=reportUrl(sid)}
+async function loadReport(sid){document.getElementById('manager').style.display='none';document.getElementById('report').style.display='block';document.getElementById('reportSid').textContent=sid;let [m,h]=await Promise.all([db.ref('/SPMS/sessions/'+sid+'/metadata').once('value'),db.ref('/SPMS/sessions/'+sid+'/history').once('value')]);let meta=m.val()||{},hist=h.val()||{},rows=Object.values(hist);rows.sort((a,b)=>(a.elapsed_seconds||a.sec||0)-(b.elapsed_seconds||b.sec||0));document.getElementById('reportMeta').textContent=(meta.created_at||'')+' — '+(meta.ended_at||'');document.getElementById('samples').textContent=meta.samples||rows.length;let last=rows.length?Number(rows[rows.length-1].elapsed_seconds||rows[rows.length-1].sec||0):0;document.getElementById('duration').textContent=last+' detik';
+let labels=rows.map(r=>r.elapsed_seconds??r.sec??0),fsrs=[1,2,3,4].map(i=>rows.map(r=>Number(r['FSR'+i+'_N']??r['fsr'+i+'_N']??r['FSR'+i]??0)));if(pressureChart)pressureChart.destroy();pressureChart=new Chart(document.getElementById('pressureChart'),{type:'line',data:{labels,datasets:fsrs.map((d,i)=>({label:'FSR'+(i+1),data:d,borderWidth:2,pointRadius:0}))},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{title:{display:true,text:'Waktu (detik)'}},y:{title:{display:true,text:'Tekanan (N)'}}}}});
+let counts={};rows.forEach(r=>{let p=r.posture||r.kategori||'Tidak diketahui';counts[p]=(counts[p]||0)+1});if(postureChart)postureChart.destroy();postureChart=new Chart(document.getElementById('postureChart'),{type:'bar',data:{labels:Object.keys(counts),datasets:[{label:'Jumlah sampel',data:Object.values(counts)}]},options:{responsive:true}});
+document.getElementById('sampleRows').innerHTML=rows.map(r=>`<tr><td>${r.elapsed_seconds??r.sec??'—'}</td><td>${r.FSR1_N??'—'}</td><td>${r.FSR2_N??'—'}</td><td>${r.FSR3_N??'—'}</td><td>${r.FSR4_N??'—'}</td><td>${r.BI??'—'}</td><td>${r.FI??'—'}</td><td>${r.posture??'—'}</td></tr>`).join('');}
+const sid=new URLSearchParams(location.search).get('session');if(sid)loadReport(sid);
+</script></body></html>
